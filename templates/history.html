@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Forensic History</h2>
+<p class="card-desc">Review the chain of custody for all previous analyses.</p>
+
+<div class="card table-container" style="margin-top: 1rem;">
+    {% if records %}
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Analysis Type</th>
+                <th>Input Name</th>
+                <th>Result</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>{{ record.timestamp }}</td>
+                <td><span class="badge badge-info">{{ record.analysis_type }}</span></td>
+                <td>{{ record.input_name[:30] }}{% if record.input_name|length > 30 %}...{% endif %}</td>
+                <td>
+                    {% if 'Real' in record.result or 'Match' in record.result %}
+                        <span class="badge badge-success">{{ record.result }}</span>
+                    {% elif 'Fake' in record.result or 'Manipulated' in record.result or 'Mismatch' in record.result %}
+                        <span class="badge badge-danger">{{ record.result }}</span>
+                    {% else %}
+                        <span class="badge badge-warning">{{ record.result }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('report', record_id=record.record_id) }}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">View Report</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+        <p>No forensic records found.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn" style="margin-top: 1rem;">Start Analysis</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

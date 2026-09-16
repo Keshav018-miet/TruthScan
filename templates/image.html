@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Image Analysis Module</h2>
+<p class="card-desc">Upload an image (JPG, PNG) to extract metadata, calculate hashes, and perform manipulation analysis.</p>
+
+<div class="card" style="margin-top: 1rem;">
+    <form method="POST" action="{{ url_for('image_analysis') }}" enctype="multipart/form-data">
+        <div class="form-group">
+            <div class="upload-area">
+                <input type="file" name="file" id="file" class="form-control" accept=".jpg,.jpeg,.png" style="display:none;" required>
+                <label for="file" class="file-label" style="cursor:pointer; display:block; padding: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; color:var(--accent);">📸</div>
+                    <strong>Click to browse</strong> or drag and drop<br>
+                    <span style="font-size: 0.9rem; color: var(--text-secondary);">JPG, JPEG, PNG</span>
+                </label>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn">Analyze Image</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>Forensic Analysis Report</h2>
+    <div>
+        <button class="btn btn-secondary" onclick="window.print()">Print Report</button>
+        <a href="{{ url_for('history') }}" class="btn">Back to History</a>
+    </div>
+</div>
+
+<div class="report-section">
+    <h3>Case Information</h3>
+    <div class="metadata-grid">
+        <div class="metadata-item">
+            <span class="metadata-label">Case / Record ID</span>
+            <strong>{{ record.record_id }}</strong>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-label">Analysis Type</span>
+            <strong>{{ record.analysis_type }}</strong>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-label">Timestamp</span>
+            <strong>{{ record.timestamp }}</strong>
+        </div>
+    </div>
+</div>
+
+<div class="report-section">
+    <h3>Input Information</h3>
+    <div class="metadata-grid">
+        <div class="metadata-item">
+            <span class="metadata-label">Input Name</span>
+            <strong>{{ record.input_name }}</strong>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-label">File Type</span>
+            <strong>{{ record.file_type|upper }}</strong>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-label">Size</span>
+            <strong>
+                {% if record.file_size %}
+                    {{ (record.file_size / 1024)|round(2) }} KB
+                {% else %}
+                    Unknown
+                {% endif %}
+            </strong>
+        </div>
+    </div>
+</div>
+
+<div class="report-section">
+    <h3>Analysis & Findings</h3>
+    
+    <div style="margin-bottom: 1.5rem; padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); background-color: var(--bg-color);">
+        <h4 style="margin-bottom: 0.5rem;">Primary Result</h4>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            {% if 'Real' in record.result or 'Match' in record.result %}
+                <span class="badge badge-success" style="font-size: 1.2rem; padding: 0.5rem 1rem;">{{ record.result }}</span>
+            {% elif 'Fake' in record.result or 'Manipulated' in record.result or 'Mismatch' in record.result %}
+                <span class="badge badge-danger" style="font-size: 1.2rem; padding: 0.5rem 1rem;">{{ record.result }}</span>
+            {% else %}
+                <span class="badge badge-warning" style="font-size: 1.2rem; padding: 0.5rem 1rem;">{{ record.result }}</span>
+            {% endif %}
+            
+            {% if record.confidence %}
+                <span style="font-weight: bold; color: var(--text-secondary);">Confidence: {{ record.confidence|round(2) }}%</span>
+            {% endif %}
+        </div>
+        
+        {% if record.fact_check_info %}
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <strong>Fact-Check Info:</strong> <span style="color: var(--warning);">{{ record.fact_check_info }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if record.sha256_hash %}
+    <div style="margin-bottom: 1rem;">
+        <span class="metadata-label">SHA-256 Hash (Cryptographic Integrity)</span>
+        <div class="hash-box">{{ record.sha256_hash }}</div>
+    </div>
+    {% endif %}
+
+    {% if record.perceptual_hash %}
+    <div style="margin-bottom: 1rem;">
+        <span class="metadata-label">Perceptual Hash (Visual Similarity)</span>
+        <div class="hash-box">{{ record.perceptual_hash }}</div>
+    </div>
+    {% endif %}
+
+    {% if record.metadata and record.metadata|length > 0 %}
+    <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Extracted Metadata (EXIF / Info)</h4>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, value in record.metadata.items() %}
+                <tr>
+                    <td style="font-family: monospace; color: var(--accent);">{{ key }}</td>
+                    <td style="word-break: break-all;">{{ value }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color: var(--text-secondary); margin-top: 1rem;"><em>No metadata/EXIF information available.</em></p>
+    {% endif %}
+</div>
+
+<div class="report-section">
+    <h3>Chain of Custody</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Event Time</th>
+                    <th>Action</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ record.timestamp }}</td>
+                    <td>File/Input Acquired & Registered</td>
+                    <td><span class="badge badge-success">COMPLETED</span></td>
+                </tr>
+                <tr>
+                    <td>{{ record.timestamp }}</td>
+                    <td>Cryptographic Hash Calculated</td>
+                    <td><span class="badge badge-success">COMPLETED</span></td>
+                </tr>
+                <tr>
+                    <td>{{ record.timestamp }}</td>
+                    <td>{{ record.analysis_type }} Executed</td>
+                    <td><span class="badge badge-success">COMPLETED</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

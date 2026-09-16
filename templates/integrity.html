@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>File Integrity Check</h2>
+<p class="card-desc">Compare two files using cryptographic hashing (SHA-256) to verify integrity.</p>
+
+<div class="card" style="margin-top: 1rem;">
+    <form method="POST" action="{{ url_for('file_integrity') }}" enctype="multipart/form-data">
+        <div class="dashboard-grid" style="margin-top:0;">
+            <div class="upload-area">
+                <input type="file" name="file_a" id="file_a" class="form-control" style="display:none;" required>
+                <label for="file_a" class="file-label" style="cursor:pointer; display:block; padding: 1rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem; color:var(--accent);">📄</div>
+                    <strong>File A (Reference)</strong><br>
+                    <span style="font-size: 0.9rem; color: var(--text-secondary);">Select the original file</span>
+                </label>
+            </div>
+            
+            <div class="upload-area">
+                <input type="file" name="file_b" id="file_b" class="form-control" style="display:none;">
+                <label for="file_b" class="file-label" style="cursor:pointer; display:block; padding: 1rem;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem; color:var(--accent);">📄</div>
+                    <strong>File B (Optional)</strong><br>
+                    <span style="font-size: 0.9rem; color: var(--text-secondary);">Select file to compare</span>
+                </label>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn" style="width: 100%; margin-top:1rem;">Verify Integrity</button>
+    </form>
+</div>
+{% endblock %}

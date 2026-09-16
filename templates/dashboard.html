@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Analysis Modules</h2>
+<p class="card-desc" style="margin-bottom: 2rem;">Select a forensic module to begin verification.</p>
+
+<div class="dashboard-grid">
+    <div class="card" onclick="window.location='{{ url_for('news_analysis') }}'" style="cursor:pointer;">
+        <div class="card-icon">📰</div>
+        <h3 class="card-title">News Analysis</h3>
+        <p class="card-desc">Analyze news articles/text using NLP and Machine Learning for potential misinformation.</p>
+        <button class="btn">Launch Module</button>
+    </div>
+
+    <div class="card" onclick="window.location='{{ url_for('image_analysis') }}'" style="cursor:pointer;">
+        <div class="card-icon">🖼️</div>
+        <h3 class="card-title">Image Analysis</h3>
+        <p class="card-desc">Analyze images for manipulation, verify EXIF metadata, and generate perceptual hashes.</p>
+        <button class="btn">Launch Module</button>
+    </div>
+
+    <div class="card" onclick="window.location='{{ url_for('video_analysis') }}'" style="cursor:pointer;">
+        <div class="card-icon">🎬</div>
+        <h3 class="card-title">Video Analysis</h3>
+        <p class="card-desc">Analyze videos for potential deepfake characteristics and verify structural integrity.</p>
+        <button class="btn">Launch Module</button>
+    </div>
+
+    <div class="card" onclick="window.location='{{ url_for('file_integrity') }}'" style="cursor:pointer;">
+        <div class="card-icon">🔒</div>
+        <h3 class="card-title">File Integrity</h3>
+        <p class="card-desc">Generate and compare SHA-256 hashes of files to verify original contents are unchanged.</p>
+        <button class="btn">Launch Module</button>
+    </div>
+    
+    <div class="card" onclick="window.location='{{ url_for('history') }}'" style="cursor:pointer;">
+        <div class="card-icon">🗄️</div>
+        <h3 class="card-title">Forensic History</h3>
+        <p class="card-desc">View the chain of custody and forensic records for all previously analyzed files.</p>
+        <button class="btn btn-secondary">View Records</button>
+    </div>
+</div>
+{% endblock %}
