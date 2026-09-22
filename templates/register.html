@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 2rem auto;">
+    <div class="card" style="padding: 2rem; border-top: 4px solid var(--success);">
+        <h2 style="text-align: center; margin-bottom: 0.5rem;">📝 Create Account</h2>
+        <p class="card-desc" style="text-align: center; margin-bottom: 1.5rem;">Register to access forensic verification capabilities.</p>
+        
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-control" required placeholder="Choose a unique username">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" required placeholder="e.g. investigator@agency.org">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required placeholder="Create a strong password">
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control" required placeholder="Re-enter password">
+            </div>
+            
+            <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Register Account</button>
+        </form>
+        
+        <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+            Already registered? <a href="{{ url_for('login') }}" style="color: var(--accent); font-weight: bold;">Sign In here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

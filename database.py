@@ -1,6 +1,7 @@
 import sqlite3
 import os
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 DB_FILE = "truthscan.db"
 
@@ -29,8 +30,66 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
     conn.commit()
+
+    # Seed default admin user if not exists
+    admin_user = c.execute('SELECT * FROM users WHERE username = ?', ('admin',)).fetchone()
+    if not admin_user:
+        hashed_pw = generate_password_hash('admin123')
+        c.execute('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+                  ('admin', 'admin@truthscan.local', hashed_pw))
+        conn.commit()
+
     conn.close()
+
+def create_user(username, email, password):
+    conn = get_db_connection()
+    c = conn.cursor()
+    hashed_pw = generate_password_hash(password)
+    try:
+        c.execute('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+                  (username.strip(), email.strip().lower(), hashed_pw))
+        conn.commit()
+        conn.close()
+        return True, "User registered successfully."
+    except sqlite3.IntegrityError as e:
+        conn.close()
+        err_str = str(e).lower()
+        if 'username' in err_str:
+            return False, "Username already exists."
+        elif 'email' in err_str:
+            return False, "Email already registered."
+        return False, "Registration failed due to a constraint conflict."
+
+def get_user_by_username(username):
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE username = ?', (username.strip(),)).fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+def get_user_by_email(email):
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE email = ?', (email.strip().lower(),)).fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+def verify_user_password(username, password):
+    user = get_user_by_username(username)
+    if not user:
+        return False, None
+    if check_password_hash(user['password_hash'], password):
+        return True, user
+    return False, None
 
 def save_record(data):
     conn = get_db_connection()
@@ -60,3 +119,4 @@ def get_record_by_id(record_id):
     record = conn.execute('SELECT * FROM forensic_records WHERE record_id = ?', (record_id,)).fetchone()
     conn.close()
     return dict(record) if record else None
+

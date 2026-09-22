@@ -10,8 +10,15 @@
     <header>
         <a href="{{ url_for('index') }}" class="logo">TRUTHSCAN</a>
         <nav class="nav-links">
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('history') }}">History</a>
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('history') }}">History</a>
+                <span style="color: var(--accent); font-weight: bold; margin-left: 0.5rem; margin-right: 0.5rem;">👤 {{ session.get('username') }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}" class="btn" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Register</a>
+            {% endif %}
         </nav>
     </header>
 

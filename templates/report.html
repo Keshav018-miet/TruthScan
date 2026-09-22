@@ -75,6 +75,36 @@
             <strong>Fact-Check Info:</strong> <span style="color: var(--warning);">{{ record.fact_check_info }}</span>
         </div>
         {% endif %}
+
+        {% if record.metadata and record.metadata.source_verification %}
+        {% set sv = record.metadata.source_verification %}
+        <div style="margin-top: 1rem; padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); background-color: rgba(255,255,255,0.03);">
+            <h5 style="margin-bottom: 0.5rem; color: var(--accent);">📡 Source Channel Verification</h5>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-top: 0.5rem;">
+                <div>
+                    <span class="metadata-label">Channel / Source</span>
+                    <strong>{{ sv.channel_name }}</strong>
+                </div>
+                <div>
+                    <span class="metadata-label">Verification Status</span>
+                    {% if sv.badge in ['VERIFIED_OFFICIAL', 'TRUSTED_DOMAIN'] %}
+                        <span class="badge badge-success">✅ {{ sv.status }}</span>
+                    {% elif sv.badge == 'UNVERIFIED' %}
+                        <span class="badge badge-warning">⚠️ {{ sv.status }}</span>
+                    {% else %}
+                        <span class="badge badge-secondary">ℹ️ {{ sv.status }}</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="metadata-label">Source Trust Score</span>
+                    <strong>{{ sv.trust_score }} / 100</strong>
+                </div>
+            </div>
+            <div style="margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-secondary);">
+                <em>{{ sv.details }}</em>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     {% if record.sha256_hash %}
