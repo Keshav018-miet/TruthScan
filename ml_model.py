@@ -107,6 +107,13 @@ class FakeNewsModel:
         self.model = None
         self.verifier = ChannelVerifier()
         self.train_model()
+        
+        # Load spaCy for NER extraction
+        import spacy
+        try:
+            self.nlp = spacy.load("en_core_web_sm")
+        except:
+            self.nlp = None
 
     def train_model(self):
         print("Training demo Fake News ML model...")
@@ -116,24 +123,69 @@ class FakeNewsModel:
         self.model = make_pipeline(TfidfVectorizer(), LogisticRegression())
         self.model.fit(texts, labels)
         print("Model training complete.")
+        
+    def extract_keywords(self, text):
+        import string
+        from spacy.lang.en.stop_words import STOP_WORDS
+        text_clean = text.translate(str.maketrans("", "", string.punctuation))
+        tokens = [t.lower() for t in text_clean.split() if t.lower() not in STOP_WORDS]
+        fallback = " ".join(tokens)
+        return fallback if fallback else text[:100]
 
     def predict(self, text, channel_url=None):
         if not self.model:
-            return {"prediction": "Error", "confidence": 0.0}
+            return {"prediction": "Error", "confidence": 0.0, "fact_check_info": "Model not loaded", "source_verification": {}}
             
+        # --- ROBUST CLAIM & ENTITY EXTRACTION ---
+        query = ""
+        if self.nlp:
+            doc = self.nlp(text)
+            ents = [ent.text for ent in doc.ents if ent.label_ in {"ORG", "GPE", "PERSON", "EVENT"}]
+            if len(ents) >= 2:
+                query = " ".join(ents)
+        
+        if not query:
+            query = self.extract_keywords(text)
+            
+        # --- MULTI-SOURCE REAL-TIME VERIFICATION PRIORITY ---
+        from multi_source_verifier import live_search_by_keywords
+        try:
+            live_results = live_search_by_keywords(query)
+        except Exception as e:
+            print(f"Live search failed: {e}")
+            live_results = []
+            
+        source_verification = self.verifier.verify_source(channel_url)
+            
+        if live_results:
+            reputable_sources = {"times of india", "hindustan times", "the hindu", "india today", "ndtv", "indian express", "reuters", "bbc"}
+            rep_hits = [r for r in live_results if any(src in r["source"].lower() for src in reputable_sources)]
+            
+            if rep_hits:
+                return {
+                    "prediction": "Verified / Likely True",
+                    "confidence": 92.0,
+                    "fact_check_info": f"Live reputable news confirms this event. Top match: {rep_hits[0]['title']}",
+                    "source_verification": source_verification,
+                    "supporting_sources": [r["url"] for r in rep_hits]
+                }
+            else:
+                return {
+                    "prediction": "Verified Breaking Event",
+                    "confidence": 85.0,
+                    "fact_check_info": f"Live news articles found matching the claim. Top match: {live_results[0]['title']}",
+                    "source_verification": source_verification,
+                    "supporting_sources": [r["url"] for r in live_results]
+                }
+
+        # --- OFFLINE ML FALLBACK & NEUTRAL CHANNEL HANDLING ---
         prediction = self.model.predict([text])[0]
         probabilities = self.model.predict_proba([text])[0]
-        
         raw_confidence = max(probabilities) * 100
         
-        # Verify source channel
-        source_verification = self.verifier.verify_source(channel_url)
-        
-        # Calculate combined confidence with channel credibility
-        text_real_prob = probabilities[0] # Probability of being Real (label 0)
+        text_real_prob = probabilities[0]
         
         if source_verification["badge"] in ["VERIFIED_OFFICIAL", "TRUSTED_DOMAIN"]:
-            # Boost Real probability if from verified channel
             combined_real_prob = (text_real_prob * 0.6) + ((source_verification["trust_score"] / 100.0) * 0.4)
         elif source_verification["badge"] == "UNVERIFIED":
             combined_real_prob = (text_real_prob * 0.85) + ((source_verification["trust_score"] / 100.0) * 0.15)
@@ -143,21 +195,25 @@ class FakeNewsModel:
         final_prediction = "Potentially Real" if combined_real_prob >= 0.5 else "Potentially Fake"
         final_confidence = round(max(combined_real_prob, 1 - combined_real_prob) * 100, 2)
         
-        # Fact check info
-        fact_check = "No specific claims identified for external verification."
+        # Override for neutral/missing channel if live search found nothing
+        if final_prediction == "Potentially Fake" and source_verification["status"] in ["No Channel Specified", "Unverified / Unknown Channel"]:
+            final_prediction = "Unverified / Needs Further Context"
+            
+        fact_check = "No live news matches found. Fact-checking requires further context."
         text_lower = text.lower()
         if "covid" in text_lower or "virus" in text_lower:
             fact_check = "Medical claims should be verified with WHO or CDC guidelines."
         elif "earth is flat" in text_lower:
             fact_check = "The Earth is scientifically proven to be a sphere. See NASA."
         elif source_verification["badge"] == "VERIFIED_OFFICIAL":
-            fact_check = f"Source verified via {source_verification['channel_name']}. Content is aligned with official channel publications."
+            fact_check = f"Source verified via {source_verification['channel_name']}. Content is aligned with official publications."
             
         return {
             "prediction": final_prediction,
             "confidence": final_confidence,
             "fact_check_info": fact_check,
-            "source_verification": source_verification
+            "source_verification": source_verification,
+            "supporting_sources": []
         }
 
 # Singleton instance

@@ -153,6 +153,13 @@ def news_analysis():
             'metadata_json': json.dumps(metadata),
             'fact_check_info': result['fact_check_info']
         }
+        
+        # If live search found sources, save them
+        if "supporting_sources" in result and result["supporting_sources"]:
+            # Optionally add to metadata for display
+            metadata["supporting_sources"] = result["supporting_sources"]
+            record_data['metadata_json'] = json.dumps(metadata)
+            
         save_record(record_data)
         return redirect(url_for('report', record_id=record_id))
         
