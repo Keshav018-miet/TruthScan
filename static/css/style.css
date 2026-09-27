@@ -316,3 +316,94 @@ footer {
     border-top: 1px solid var(--border-color);
     margin-top: auto;
 }
+
+/* ==========================================================================
+   Responsive & Mobile-Friendly Adjustments
+   ========================================================================== */
+
+/* Fix zooming on mobile devices */
+input, textarea, select {
+    font-size: 16px !important; /* Forces mobile browsers not to zoom in */
+}
+
+/* Ensure long text/URLs/hashes wrap properly */
+.hash-box, a {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Make buttons finger-friendly (minimum 44px touch target) */
+.btn {
+    min-height: 44px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Mobile Media Queries */
+@media (max-width: 768px) {
+    /* Stack Header / Navbar */
+    header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .nav-links a {
+        margin-left: 0;
+        margin: 0.25rem 0.5rem;
+    }
+    
+    /* Ensure content containers don't overflow */
+    .container {
+        padding: 1rem;
+    }
+
+    /* Convert grid information blocks to flexible stacked columns */
+    .metadata-grid,
+    .dashboard-grid,
+    div[style*="display: grid"] {
+        grid-template-columns: 1fr !important; /* Force single column on mobile */
+        gap: 1rem;
+    }
+
+    /* Wrap flex containers dynamically in reports / live search */
+    div[style*="display: flex"] {
+        flex-wrap: wrap !important;
+    }
+
+    /* Ensure flex children take full width when stacked */
+    div[style*="flex: 1"] {
+        flex: 1 1 100% !important;
+    }
+
+    /* Make buttons full width on small screens */
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Allow header elements with flex/space-between to stack */
+    div[style*="display: flex"][style*="justify-content: space-between"],
+    div[style*="display: flex; justify-content: space-between"] {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+    
+    /* Ensure action button groups wrap cleanly */
+    div[style*="justify-content: space-between"] > div {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+}
