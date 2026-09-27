@@ -5,6 +5,12 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.utils import secure_filename
 import json
 
+from dotenv import load_dotenv
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+if not os.path.exists(env_path):
+    print("⚠️ WARNING: .env file not found! Please create one with GEMINI_API_KEY and NEWSAPI_KEY variables to enable AI analysis.")
+load_dotenv(override=True)
+
 from database import (
     init_db, save_record, get_all_records, get_record_by_id,
     create_user, verify_user_password, get_user_by_username
@@ -395,7 +401,9 @@ def verify_live():
         "confidence_score": result.get("confidence_score"),
         "supporting_sources": result.get("supporting_sources", []),
         "reasoning": result.get("reasoning", ""),
-        "record_id": record_id
+        "record_id": record_id,
+        "raw_articles": result.get("raw_articles", []),
+        "ai_disabled": result.get("ai_disabled", False)
     }
 
 if __name__ == '__main__':

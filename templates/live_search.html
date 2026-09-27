@@ -19,6 +19,10 @@
     <div id="result-container" style="display: none; margin-top: 2rem; padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-color);">
         <h3 style="margin-bottom: 1rem; color: var(--accent);">Analysis Result</h3>
         
+        <div id="ai-disabled-badge" style="display: none; margin-bottom: 1.5rem; padding: 0.75rem; border-radius: 4px; background-color: rgba(243, 156, 18, 0.1); border: 1px solid var(--warning); color: #b7791f; font-weight: bold; text-align: center;">
+            ⚠️ AI Synthesis Disabled (Displaying Direct Web Search Results)
+        </div>
+        
         <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
             <div style="flex: 1; padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); text-align: center;">
                 <span class="metadata-label" style="margin-bottom: 0.5rem; display: block;">Status</span>
@@ -35,7 +39,12 @@
             <p id="res-reasoning" style="margin-top: 0.5rem; color: var(--text-secondary);"></p>
         </div>
         
-        <div>
+        <div id="raw-articles-container" style="display: none; margin-bottom: 1.5rem;">
+            <strong>Live News Matches:</strong>
+            <div id="res-articles" style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 1rem;"></div>
+        </div>
+
+        <div id="sources-container">
             <strong>Supporting Sources:</strong>
             <ul id="res-sources" style="margin-top: 0.5rem; padding-left: 1.5rem; color: var(--accent);">
             </ul>
@@ -59,6 +68,9 @@ document.getElementById('verify-btn').addEventListener('click', async () => {
     document.getElementById('verify-btn').disabled = true;
     document.getElementById('result-container').style.display = 'none';
     document.getElementById('loading-spinner').style.display = 'block';
+    document.getElementById('ai-disabled-badge').style.display = 'none';
+    document.getElementById('raw-articles-container').style.display = 'none';
+    document.getElementById('sources-container').style.display = 'block';
     
     try {
         const response = await fetch('/verify/live', {
@@ -75,39 +87,69 @@ document.getElementById('verify-btn').addEventListener('click', async () => {
             alert(data.error);
         } else {
             // Update UI
+            if (data.ai_disabled) {
+                document.getElementById('ai-disabled-badge').style.display = 'block';
+                document.getElementById('res-confidence').textContent = 'N/A';
+            } else {
+                document.getElementById('res-confidence').textContent = data.confidence_score + '%';
+            }
+
             const statusEl = document.getElementById('res-status');
             statusEl.textContent = data.verification_status;
             
             // Set badge color based on status
-            if (data.verification_status === 'True') {
+            if (data.verification_status.includes('True') || data.verification_status.includes('Verified')) {
                 statusEl.style.color = 'var(--success)';
-            } else if (data.verification_status === 'Fake') {
+            } else if (data.verification_status.includes('Fake')) {
                 statusEl.style.color = 'var(--danger)';
             } else {
                 statusEl.style.color = 'var(--warning)';
             }
             
-            document.getElementById('res-confidence').textContent = data.confidence_score + '%';
             document.getElementById('res-reasoning').textContent = data.reasoning;
             
-            const sourcesList = document.getElementById('res-sources');
-            sourcesList.innerHTML = '';
-            if (data.supporting_sources && data.supporting_sources.length > 0) {
-                data.supporting_sources.forEach(url => {
-                    const li = document.createElement('li');
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.target = '_blank';
-                    a.textContent = url;
-                    a.style.color = 'var(--accent)';
-                    li.appendChild(a);
-                    sourcesList.appendChild(li);
+            // Render Raw Articles if available
+            const articlesList = document.getElementById('res-articles');
+            articlesList.innerHTML = '';
+            if (data.raw_articles && data.raw_articles.length > 0) {
+                document.getElementById('raw-articles-container').style.display = 'block';
+                document.getElementById('sources-container').style.display = 'none'; // Hide simple sources list since we have rich articles
+                
+                data.raw_articles.forEach(article => {
+                    const div = document.createElement('div');
+                    div.style.padding = '1rem';
+                    div.style.border = '1px solid var(--border-color)';
+                    div.style.borderRadius = '4px';
+                    div.style.backgroundColor = 'rgba(59, 78, 104, 0.03)';
+                    
+                    div.innerHTML = `
+                        <h4 style="margin-bottom: 0.25rem; font-size: 1.1rem;"><a href="${article.url}" target="_blank" style="color: var(--accent); text-decoration: none;">${article.title}</a></h4>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Source: <strong>${article.source}</strong> | Published: ${article.published_time || 'Unknown'}</div>
+                        <p style="font-size: 0.95rem; margin: 0; color: var(--text-primary);">${article.summary}</p>
+                    `;
+                    articlesList.appendChild(div);
                 });
             } else {
-                const li = document.createElement('li');
-                li.textContent = "No live sources could be retrieved.";
-                li.style.color = 'var(--text-secondary)';
-                sourcesList.appendChild(li);
+                // Fallback to simple sources list
+                const sourcesList = document.getElementById('res-sources');
+                sourcesList.innerHTML = '';
+                if (data.supporting_sources && data.supporting_sources.length > 0) {
+                    data.supporting_sources.forEach(url => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.target = '_blank';
+                        a.textContent = url;
+                        a.style.color = 'var(--accent)';
+                        li.appendChild(a);
+                        sourcesList.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = "No live sources could be retrieved.";
+                    li.style.color = 'var(--text-secondary)';
+                    sourcesList.appendChild(li);
+                }
             }
             
             document.getElementById('res-report-link').href = `/report/${data.record_id}`;
