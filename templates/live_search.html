@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Live Web Fact-Checker (RAG Pipeline)</h2>
+<p class="card-desc">Instantly verify claims against live news articles and web content using AI and real-time search.</p>
+
+<div class="card" style="margin-top: 1rem;">
+    <div class="form-group">
+        <label for="claim_text">Enter Claim to Verify</label>
+        <textarea id="claim_text" class="form-control" rows="4" placeholder="e.g. Breaking: The stock market crashed today..."></textarea>
+    </div>
+    
+    <button id="verify-btn" class="btn" style="background-color: var(--accent);">Verify Claim</button>
+    
+    <div id="loading-spinner" style="display: none; margin-top: 1.5rem; text-align: center;">
+        <p style="color: var(--text-secondary);">⏳ Searching the web and analyzing context... this may take a few seconds.</p>
+    </div>
+    
+    <div id="result-container" style="display: none; margin-top: 2rem; padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-color);">
+        <h3 style="margin-bottom: 1rem; color: var(--accent);">Analysis Result</h3>
+        
+        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+            <div style="flex: 1; padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); text-align: center;">
+                <span class="metadata-label" style="margin-bottom: 0.5rem; display: block;">Status</span>
+                <strong id="res-status" style="font-size: 1.25rem;"></strong>
+            </div>
+            <div style="flex: 1; padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); text-align: center;">
+                <span class="metadata-label" style="margin-bottom: 0.5rem; display: block;">AI Confidence</span>
+                <strong id="res-confidence" style="font-size: 1.25rem;"></strong>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong>Reasoning:</strong>
+            <p id="res-reasoning" style="margin-top: 0.5rem; color: var(--text-secondary);"></p>
+        </div>
+        
+        <div>
+            <strong>Supporting Sources:</strong>
+            <ul id="res-sources" style="margin-top: 0.5rem; padding-left: 1.5rem; color: var(--accent);">
+            </ul>
+        </div>
+        
+        <div style="margin-top: 1.5rem; text-align: right;">
+            <a id="res-report-link" href="#" class="btn btn-secondary">View Detailed Report</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('verify-btn').addEventListener('click', async () => {
+    const claim = document.getElementById('claim_text').value.trim();
+    if (!claim) {
+        alert("Please enter a claim to verify.");
+        return;
+    }
+    
+    // UI state
+    document.getElementById('verify-btn').disabled = true;
+    document.getElementById('result-container').style.display = 'none';
+    document.getElementById('loading-spinner').style.display = 'block';
+    
+    try {
+        const response = await fetch('/verify/live', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ claim: claim })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            alert(data.error);
+        } else {
+            // Update UI
+            const statusEl = document.getElementById('res-status');
+            statusEl.textContent = data.verification_status;
+            
+            // Set badge color based on status
+            if (data.verification_status === 'True') {
+                statusEl.style.color = 'var(--success)';
+            } else if (data.verification_status === 'Fake') {
+                statusEl.style.color = 'var(--danger)';
+            } else {
+                statusEl.style.color = 'var(--warning)';
+            }
+            
+            document.getElementById('res-confidence').textContent = data.confidence_score + '%';
+            document.getElementById('res-reasoning').textContent = data.reasoning;
+            
+            const sourcesList = document.getElementById('res-sources');
+            sourcesList.innerHTML = '';
+            if (data.supporting_sources && data.supporting_sources.length > 0) {
+                data.supporting_sources.forEach(url => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.target = '_blank';
+                    a.textContent = url;
+                    a.style.color = 'var(--accent)';
+                    li.appendChild(a);
+                    sourcesList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = "No live sources could be retrieved.";
+                li.style.color = 'var(--text-secondary)';
+                sourcesList.appendChild(li);
+            }
+            
+            document.getElementById('res-report-link').href = `/report/${data.record_id}`;
+            document.getElementById('result-container').style.display = 'block';
+        }
+    } catch (error) {
+        alert("An error occurred during verification.");
+        console.error(error);
+    } finally {
+        document.getElementById('verify-btn').disabled = false;
+        document.getElementById('loading-spinner').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

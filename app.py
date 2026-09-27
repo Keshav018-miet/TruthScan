@@ -11,6 +11,7 @@ from database import (
 )
 from utils import get_sha256, get_perceptual_hash, extract_exif, analyze_video_frames, dummy_deepfake_detect_image, dummy_deepfake_detect_video
 from ml_model import nlp_model
+from live_search import fact_check_claim
 
 app = Flask(__name__)
 app.secret_key = "truthscan_secret_key_student_project"
@@ -334,6 +335,61 @@ def report(record_id):
         record_copy['metadata'] = {}
         
     return render_template('report.html', record=record_copy)
+
+@app.route('/live_fact_check', methods=['GET'])
+@login_required
+def live_fact_check_ui():
+    return render_template('live_search.html')
+
+@app.route('/verify/live', methods=['POST'])
+@login_required
+def verify_live():
+    data = request.get_json()
+    if not data or 'claim' not in data:
+        return {"error": "Missing claim text"}, 400
+        
+    claim = data['claim'].strip()
+    if not claim:
+        return {"error": "Claim text cannot be empty"}, 400
+        
+    # Execute RAG Pipeline
+    result = fact_check_claim(claim)
+    
+    # Generate a unique record ID
+    record_id = str(uuid.uuid4())
+    
+    # Prepare metadata for logging
+    metadata = {
+        "supporting_sources": result.get("supporting_sources", []),
+        "reasoning": result.get("reasoning", "")
+    }
+    
+    # Construct DB record
+    record_data = {
+        'record_id': record_id,
+        'analysis_type': 'Live Web RAG Verification',
+        'input_name': claim[:50] + "..." if len(claim) > 50 else claim,
+        'file_type': 'text',
+        'file_size': len(claim),
+        'sha256_hash': None,
+        'perceptual_hash': None,
+        'result': result.get('verification_status', 'Error'),
+        'confidence': result.get('confidence_score', 0),
+        'metadata_json': json.dumps(metadata),
+        'fact_check_info': result.get('reasoning', '')
+    }
+    
+    # Save to forensic_records
+    save_record(record_data)
+    
+    # Return JSON to frontend
+    return {
+        "verification_status": result.get("verification_status"),
+        "confidence_score": result.get("confidence_score"),
+        "supporting_sources": result.get("supporting_sources", []),
+        "reasoning": result.get("reasoning", ""),
+        "record_id": record_id
+    }
 
 if __name__ == '__main__':
     app.run(debug=True)

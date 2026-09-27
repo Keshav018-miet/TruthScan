@@ -12,6 +12,13 @@
         <button class="btn">Launch Module</button>
     </div>
 
+    <div class="card" onclick="window.location='{{ url_for('live_fact_check_ui') }}'" style="cursor:pointer; border-color: var(--accent);">
+        <div class="card-icon">🌐</div>
+        <h3 class="card-title">Live Web Search (RAG)</h3>
+        <p class="card-desc">Instantly cross-check breaking news and claims against live articles using AI.</p>
+        <button class="btn" style="background-color: var(--accent);">Live Search</button>
+    </div>
+
     <div class="card" onclick="window.location='{{ url_for('image_analysis') }}'" style="cursor:pointer;">
         <div class="card-icon">🖼️</div>
         <h3 class="card-title">Image Analysis</h3>

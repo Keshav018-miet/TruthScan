@@ -12,6 +12,7 @@
         <nav class="nav-links">
             {% if session.get('user_id') %}
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('live_fact_check_ui') }}">Live Search</a>
                 <a href="{{ url_for('history') }}">History</a>
                 <span style="color: var(--accent); font-weight: bold; margin-left: 0.5rem; margin-right: 0.5rem;">👤 {{ session.get('username') }}</span>
                 <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Logout</a>
