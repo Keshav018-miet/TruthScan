@@ -3,7 +3,14 @@ Werkzeug
 Pillow
 imagehash
 scikit-learn
-opencv-python-headless
 ExifRead
 numpy
 scipy
+python-dotenv
+requests
+feedparser
+beautifulsoup4
+google-genai
+spacy
+markdown
+fpdf2

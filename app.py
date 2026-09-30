@@ -22,14 +22,15 @@ from live_search import fact_check_claim
 app = Flask(__name__)
 app.secret_key = "truthscan_secret_key_student_project"
 
-UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
+if os.environ.get('VERCEL'):
+    UPLOAD_FOLDER = os.path.join('/tmp', 'uploads')
+else:
+    UPLOAD_FOLDER = os.path.join(app.root_path, 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024 # 50 MB max
 
-# Ensure upload folder exists
+# Ensure upload folder exists and database initialized
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# Initialize DB
 init_db()
 
 ALLOWED_EXTENSIONS_IMAGE = {'png', 'jpg', 'jpeg'}
@@ -407,4 +408,4 @@ def verify_live():
     }
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

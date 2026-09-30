@@ -3,7 +3,10 @@ import os
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
-DB_FILE = "truthscan.db"
+if os.environ.get('VERCEL'):
+    DB_FILE = os.path.join('/tmp', 'truthscan.db')
+else:
+    DB_FILE = os.path.join(os.path.dirname(__file__), 'truthscan.db')
 
 def get_db_connection():
     conn = sqlite3.connect(DB_FILE)
